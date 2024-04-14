@@ -1,0 +1,4 @@
+repository "MapGenerationTest@FearsOfEvil@cloud"
+  path "/"
+    br "/main"
+    co "/main"
