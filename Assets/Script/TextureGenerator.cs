@@ -12,7 +12,7 @@ public static class TextureGenerator
         texture.SetPixels(colourMap);
         texture.Apply();
         return texture;
-        
+
     }
 
     public static Texture2D TextureFromHeightMap(float[,] heightmap)
