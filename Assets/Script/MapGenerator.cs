@@ -11,9 +11,9 @@ public class MapGenerator : MonoBehaviour
 
     public DrawMode drawMode;
 
-    const int mapChunkSize = 241;
+    public const int mapChunkSize = 241;
     [Range(0, 6)]
-    public int levelOfDetail;
+    public int editorPreviewLOD;
     public float noiseScale;
 
     public int octaves;
@@ -32,37 +32,37 @@ public class MapGenerator : MonoBehaviour
 
     Queue<MapThreadInfo<MapData>> mapDataThreadInfosQueue = new Queue<MapThreadInfo<MapData>>();
     Queue<MapThreadInfo<MeshData>> meshDataThreadInfosQueue = new Queue<MapThreadInfo<MeshData>>();
-    public void requestMapData(Action<MapData> callback)
+    public void requestMapData(Action<MapData> callback, Vector2 centre)
     {
         ThreadStart threadStart = delegate
         {
-            mapDataThread(callback);
+            mapDataThread(callback, centre);
         };
 
         new Thread(threadStart).Start();
     }
 
-    public void requestMeshData(Action<MeshData> callback, MapData mapData)
+    public void requestMeshData(Action<MeshData> callback, MapData mapData, int lod)
     {
         ThreadStart threadStart = delegate
         {
-            meshDataThread(callback, mapData);
+            meshDataThread(callback, mapData, lod);
         };
 
         new Thread(threadStart).Start();
     }
 
-    void mapDataThread(Action<MapData> callback)
+    void mapDataThread(Action<MapData> callback, Vector2 centre)
     {
-        MapData mapData = GenerateMapData();
+        MapData mapData = GenerateMapData(centre);
         lock(mapDataThreadInfosQueue){
             mapDataThreadInfosQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
         }
     }
 
-    void meshDataThread(Action<MeshData> callback, MapData mapData)
+    void meshDataThread(Action<MeshData> callback, MapData mapData, int lod)
     {
-        MeshData meshData = MeshGenerator.GererateTerrainMap(mapData.heightMap, meshHeightMultiplier, animationCurve, levelOfDetail);
+        MeshData meshData = MeshGenerator.GererateTerrainMap(mapData.heightMap, meshHeightMultiplier, animationCurve, lod);
         lock (meshDataThreadInfosQueue)
         {
             meshDataThreadInfosQueue.Enqueue(new MapThreadInfo<MeshData>(callback, meshData));
@@ -71,7 +71,7 @@ public class MapGenerator : MonoBehaviour
 
     public void drawMapInEditor()
     {
-        MapData mapData = GenerateMapData();
+        MapData mapData = GenerateMapData(Vector2.zero);
         MapDisplay display = FindObjectOfType<MapDisplay>();
         if (drawMode == DrawMode.NoiseMap)
         {
@@ -83,7 +83,7 @@ public class MapGenerator : MonoBehaviour
         }
         else if (drawMode == DrawMode.Mesh)
         {
-            display.DrawMesh(MeshGenerator.GererateTerrainMap(mapData.heightMap, meshHeightMultiplier, animationCurve, levelOfDetail), TextureGenerator.TextureFromColourMap(mapData.colourMap, mapChunkSize, mapChunkSize));
+            display.DrawMesh(MeshGenerator.GererateTerrainMap(mapData.heightMap, meshHeightMultiplier, animationCurve, editorPreviewLOD), TextureGenerator.TextureFromColourMap(mapData.colourMap, mapChunkSize, mapChunkSize));
         }
     }
 
@@ -108,9 +108,9 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
-    MapData GenerateMapData()
+    MapData GenerateMapData(Vector2 centre)
     {
-        float[,] mapNoise = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, offset);
+        float[,] mapNoise = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, centre + offset);
 
         Color[] colourMap = new Color[mapChunkSize * mapChunkSize];
         for(int y = 0; y < mapChunkSize; y++)
