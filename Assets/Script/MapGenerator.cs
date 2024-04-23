@@ -7,7 +7,7 @@ using System;
 public class MapGenerator : MonoBehaviour
 {
 
-    public enum DrawMode { NoiseMap, ColourMap, Mesh}
+    public enum DrawMode { NoiseMap, ColourMap, Mesh, FalloffMap }
 
     public DrawMode drawMode;
     public Noise.NormalizeMode normalizeMode;
@@ -28,11 +28,20 @@ public class MapGenerator : MonoBehaviour
     public AnimationCurve animationCurve;
 
     public bool autoUpdate;
+    public bool useFalloffMap;
 
     public TerrainType[] regions;
 
+    float[,] falloffMap;
+
     Queue<MapThreadInfo<MapData>> mapDataThreadInfosQueue = new Queue<MapThreadInfo<MapData>>();
     Queue<MapThreadInfo<MeshData>> meshDataThreadInfosQueue = new Queue<MapThreadInfo<MeshData>>();
+
+    private void Awake()
+    {
+        falloffMap = FallofGenerator.GenerateFalloffMap(mapChunkSize);
+    }
+
     public void requestMapData(Action<MapData> callback, Vector2 centre)
     {
         ThreadStart threadStart = delegate
@@ -56,7 +65,8 @@ public class MapGenerator : MonoBehaviour
     void mapDataThread(Action<MapData> callback, Vector2 centre)
     {
         MapData mapData = GenerateMapData(centre);
-        lock(mapDataThreadInfosQueue){
+        lock (mapDataThreadInfosQueue)
+        {
             mapDataThreadInfosQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
         }
     }
@@ -86,13 +96,17 @@ public class MapGenerator : MonoBehaviour
         {
             display.DrawMesh(MeshGenerator.GererateTerrainMap(mapData.heightMap, meshHeightMultiplier, animationCurve, editorPreviewLOD), TextureGenerator.TextureFromColourMap(mapData.colourMap, mapChunkSize, mapChunkSize));
         }
+        else if (drawMode == DrawMode.FalloffMap)
+        {
+            display.DrawTextureMap(TextureGenerator.TextureFromHeightMap(FallofGenerator.GenerateFalloffMap(mapChunkSize)));
+        }
     }
 
     private void Update()
     {
-        if(mapDataThreadInfosQueue.Count > 0)
+        if (mapDataThreadInfosQueue.Count > 0)
         {
-            for(int i = 0; i < mapDataThreadInfosQueue.Count; i++)
+            for (int i = 0; i < mapDataThreadInfosQueue.Count; i++)
             {
                 MapThreadInfo<MapData> mapThreadInfo = mapDataThreadInfosQueue.Dequeue();
                 mapThreadInfo.callback(mapThreadInfo.parameter);
@@ -114,14 +128,19 @@ public class MapGenerator : MonoBehaviour
         float[,] mapNoise = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, centre + offset, normalizeMode);
 
         Color[] colourMap = new Color[mapChunkSize * mapChunkSize];
-        for(int y = 0; y < mapChunkSize; y++)
+        for (int y = 0; y < mapChunkSize; y++)
         {
-            for(int x = 0; x < mapChunkSize; x++)
+            for (int x = 0; x < mapChunkSize; x++)
             {
-                float currentHeight = mapNoise[x, y];
-                for(int i = 0; i < regions.Length; i++)
+                if (useFalloffMap)
                 {
-                    if(currentHeight >= regions[i].height)
+                    mapNoise[x, y] = Mathf.Clamp(mapNoise[x, y] - falloffMap[x, y], 0, 1);
+                }
+
+                float currentHeight = mapNoise[x, y];
+                for (int i = 0; i < regions.Length; i++)
+                {
+                    if (currentHeight >= regions[i].height)
                     {
                         colourMap[y * mapChunkSize + x] = regions[i].color;
                     }
@@ -132,14 +151,16 @@ public class MapGenerator : MonoBehaviour
                 }
             }
         }
-        
+
         return new MapData(mapNoise, colourMap);
     }
 
     private void OnValidate()
     {
-        if(lacunarity < 1) lacunarity = 1;
-        if(octaves < 0) octaves = 0;
+        if (lacunarity < 1) lacunarity = 1;
+        if (octaves < 0) octaves = 0;
+
+        falloffMap = FallofGenerator.GenerateFalloffMap(mapChunkSize);
     }
 
     struct MapThreadInfo<T>

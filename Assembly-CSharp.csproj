@@ -63,6 +63,7 @@
     <Compile Include="Assets\Script\Noise.cs" />
     <Compile Include="Assets\Script\MapGenerator.cs" />
     <Compile Include="Assets\Script\MapDisplay.cs" />
+    <Compile Include="Assets\Script\FalloffGenerator.cs" />
     <Compile Include="Assets\Script\MeshGenerator.cs" />
     <Compile Include="Assets\Script\TextureGenerator.cs" />
     <Compile Include="Assets\Script\EndlessTerrain.cs" />
