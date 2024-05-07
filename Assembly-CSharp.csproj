@@ -66,6 +66,7 @@
     <Compile Include="Assets\Script\FalloffGenerator.cs" />
     <Compile Include="Assets\Script\MeshGenerator.cs" />
     <Compile Include="Assets\Script\TextureGenerator.cs" />
+    <Compile Include="Assets\Script\HideOnPlay.cs" />
     <Compile Include="Assets\Script\EndlessTerrain.cs" />
   </ItemGroup>
   <ItemGroup>
