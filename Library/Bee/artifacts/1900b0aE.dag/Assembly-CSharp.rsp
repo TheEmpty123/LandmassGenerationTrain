@@ -358,7 +358,9 @@
 "Assets/Script/MapDisplay.cs"
 "Assets/Script/MapGenerator.cs"
 "Assets/Script/MeshGenerator.cs"
+"Assets/Script/MouseMovement.cs"
 "Assets/Script/Noise.cs"
+"Assets/Script/PlayerMovement.cs"
 "Assets/Script/TextureGenerator.cs"
 -langversion:9.0
 
