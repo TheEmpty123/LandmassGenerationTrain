@@ -22,6 +22,8 @@ public class MouseMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(true)
+        {
             float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
             float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 
@@ -37,5 +39,6 @@ public class MouseMovement : MonoBehaviour
             //applying both rotation
             transform.localRotation = Quaternion.Euler(0f, yRotation, 0f);
             playerHead.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        }
     }
 }
